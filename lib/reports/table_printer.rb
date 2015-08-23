@@ -1,6 +1,6 @@
 require 'active_support/core_ext/hash/keys'
 
-require 'reports/number_humanizer'
+require_relative './number_humanizer'
 
 module Reports
 

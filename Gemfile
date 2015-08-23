@@ -1,6 +1,6 @@
 source "https://rubygems.org"
 
-ruby '2.1.2'
+ruby '2.2.2'
 
 gem "rake"
 gem "octokit"
@@ -10,6 +10,8 @@ gem "activesupport"
 gem "dalli"
 gem "redis"
 gem "faraday"
+gem "json"
+gem "pry"
 
 group :development, :test do
   gem "byebug"
