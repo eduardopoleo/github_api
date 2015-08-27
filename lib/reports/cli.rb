@@ -16,7 +16,7 @@ module Reports
       user = client.user_info(user_name)
       puts "name: #{user.name}"
       puts "location: #{user.location}"
-      puts "public repo: #{user.public_repos}"
+      puts "public repos: #{user.public_repos}"
     end
 
     desc "console", "Open an RB session with all dependencies loaded and API defined."
