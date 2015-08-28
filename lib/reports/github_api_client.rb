@@ -6,25 +6,33 @@ module Reports
   class Error < StandardError; end
   class RequestFailure < Error; end
   class NonExistingUser < Error; end
+  class AuthenticationFailure < Error; end
 
   User = Struct.new(:name, :location, :public_repos)
-  VALID_STATUS_CODES = [200, 302, 403, 422, 404]
+  VALID_STATUS_CODES = [200, 302, 403, 422, 404, 401]
 
   class GitHubAPIClient
-    def initialize
+    def initialize(token)
+      @token = token
       @logger = Logger.new(STDOUT)
     end
 
     def user_info(username)
+      headers = {"Authorization" => "token #{@token}"}
       url = "https://api.github.com/users/#{username}"
+
       start_time = Time.now
-      response = Faraday.get(url)
+      response = Faraday.get(url, nil, headers)
       duration = Time.now - start_time
 
       @logger.debug '-> %s %s %d (%.3f s)' % [url, 'GET', response.status, duration]
 
       if !VALID_STATUS_CODES.include?(response.status)
         raise RequestFailure, JSON.parse(response.body)["message"]
+      end
+
+      if response.status == 401
+        raise AuthenticationFailure, "Authentication Failed please send the correct github token"
       end
 
       if response.status == 404

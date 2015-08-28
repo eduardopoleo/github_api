@@ -1,6 +1,8 @@
 require 'rubygems'
 require 'bundler/setup'
 require 'thor'
+require 'dotenv'
+Dotenv.load
 
 require_relative './github_api_client'
 require_relative './table_printer'
@@ -13,7 +15,7 @@ module Reports
     def user_info(user_name)
       puts "Getting info for #{user_name}"
 
-      client = GitHubAPIClient.new
+      client = GitHubAPIClient.new(ENV['GITHUB_TOKEN'])
       user = client.user_info(user_name)
 
       puts "name: #{user.name}"
