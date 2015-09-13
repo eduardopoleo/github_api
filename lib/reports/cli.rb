@@ -31,6 +31,22 @@ module Reports
       exit 1
     end
 
+    desc "repositories USERNAME", "Get public repos for a user"
+    def repositories(user_name)
+      puts "Getting repos for #{user_name}"
+
+      client = GitHubAPIClient.new(ENV['GITHUB_TOKEN'])
+      user_repos = client.repos(user_name)
+
+      user_repos.each do |repo|
+        puts "#{repo.name} -  #{repo.url}"
+      end
+
+    rescue Error => error
+      puts "ERROR: #{error.message}"
+      exit 1
+    end
+
     desc "console", "Open an RB session with all dependencies loaded and API defined."
     def console
       require 'irb'

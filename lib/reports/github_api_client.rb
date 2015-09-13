@@ -9,6 +9,7 @@ module Reports
   class AuthenticationFailure < Error; end
 
   User = Struct.new(:name, :location, :public_repos)
+  Repo = Struct.new(:name, :url)
   VALID_STATUS_CODES = [200, 302, 403, 422, 404, 401]
 
   #Concerns of the client:
@@ -48,6 +49,34 @@ module Reports
 
       data = JSON.parse(response.body)
       User.new(data["name"], data["location"], data["public_repos"])
+    end
+
+    def repos(username)
+      headers = {"Authorization" => "token #{@token}"}
+      url = "https://api.github.com/users/#{username}/repos"
+
+      start_time = Time.now
+      response = Faraday.get(url, nil, headers)
+      duration = Time.now - start_time
+
+      @logger.debug '-> %s %s %d (%.3f s)' % [url, 'GET', response.status, duration]
+
+      if !VALID_STATUS_CODES.include?(response.status)
+        raise RequestFailure, JSON.parse(response.body)["message"]
+      end
+
+      if response.status == 401
+        raise AuthenticationFailure, "Authentication Failed please send the correct github token"
+      end
+
+      if response.status == 404
+        raise NonExistingUser, "#{username} not found"
+      end
+
+      raw_data = JSON.parse(response.body)
+      repos = raw_data.map do |raw_repo|
+        Repo.new(raw_repo["full_name"], raw_repo["html_url"] )
+      end
     end
   end
 end
