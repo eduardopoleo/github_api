@@ -29,23 +29,7 @@ module Reports
       headers = {"Authorization" => "token #{@token}"}
       url = "https://api.github.com/users/#{username}"
 
-      start_time = Time.now
-      response = Faraday.get(url, nil, headers)
-      duration = Time.now - start_time
-
-      @logger.debug '-> %s %s %d (%.3f s)' % [url, 'GET', response.status, duration]
-
-      if !VALID_STATUS_CODES.include?(response.status)
-        raise RequestFailure, JSON.parse(response.body)["message"]
-      end
-
-      if response.status == 401
-        raise AuthenticationFailure, "Authentication Failed please send the correct github token"
-      end
-
-      if response.status == 404
-        raise NonExistingUser, "#{username} not found"
-      end
+      response = execute_api_call(headers, url)
 
       data = JSON.parse(response.body)
       User.new(data["name"], data["location"], data["public_repos"])
@@ -55,6 +39,17 @@ module Reports
       headers = {"Authorization" => "token #{@token}"}
       url = "https://api.github.com/users/#{username}/repos"
 
+      response = execute_api_call(headers, url)
+
+      raw_data = JSON.parse(response.body)
+      repos = raw_data.map do |raw_repo|
+        Repo.new(raw_repo["full_name"], raw_repo["html_url"] )
+      end
+    end
+
+    private
+
+    def execute_api_call(headers, url)
       start_time = Time.now
       response = Faraday.get(url, nil, headers)
       duration = Time.now - start_time
@@ -73,10 +68,7 @@ module Reports
         raise NonExistingUser, "#{username} not found"
       end
 
-      raw_data = JSON.parse(response.body)
-      repos = raw_data.map do |raw_repo|
-        Repo.new(raw_repo["full_name"], raw_repo["html_url"] )
-      end
+      response
     end
   end
 end
