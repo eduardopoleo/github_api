@@ -3,6 +3,8 @@ require 'json'
 require 'logger'
 require_relative 'middleware/logging'
 require_relative 'middleware/authentication'
+require_relative 'middleware/status'
+require_relative 'middleware/json_parser'
 
 module Reports
   class Error < StandardError; end
@@ -12,7 +14,6 @@ module Reports
 
   User = Struct.new(:name, :location, :public_repos)
   Repo = Struct.new(:name, :url)
-  VALID_STATUS_CODES = [200, 302, 403, 422, 404, 401]
 
   #Concerns of the client:
   #This could probably be seen as on big concern: Handling Api call.
@@ -27,20 +28,7 @@ module Reports
 
       response = connection.get(url, nil)
 
-      if !VALID_STATUS_CODES.include?(response.status)
-        raise RequestFailure, JSON.parse(response.body)["message"]
-      end
-
-      if response.status == 401
-        raise AuthenticationFailure, "Authentication Failed please send the correct github token"
-      end
-
-      if response.status == 404
-        raise NonExistingUser, "#{username} not found"
-      end
-
-      data = JSON.parse(response.body)
-      User.new(data["name"], data["location"], data["public_repos"])
+      User.new(response.body["name"], response.body["location"], response.body["public_repos"])
     end
 
     def repos(username)
@@ -48,21 +36,8 @@ module Reports
 
       response = connection.get(url, nil)
 
-      if !VALID_STATUS_CODES.include?(response.status)
-        raise RequestFailure, JSON.parse(response.body)["message"]
-      end
-
-      if response.status == 401
-        raise AuthenticationFailure, "Authentication Failed please send the correct github token"
-      end
-
-      if response.status == 404
-        raise NonExistingUser, "#{username} not found"
-      end
-
-      raw_data = JSON.parse(response.body)
-      repos = raw_data.map do |raw_repo|
-        Repo.new(raw_repo["full_name"], raw_repo["html_url"] )
+      repos = response.body.map do |repo|
+        Repo.new(repo["full_name"], repo["html_url"] )
       end
     end
 
@@ -73,6 +48,8 @@ module Reports
       @connnection ||= Faraday::Connection.new do |builder|
         builder.use Middleware::Authentication
         builder.use Middleware::Logging
+        builder.use Middleware::Status
+        builder.use Middleware::JasonParser
         builder.adapter Faraday.default_adapter
       end
     end
