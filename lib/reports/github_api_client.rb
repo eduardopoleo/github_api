@@ -2,6 +2,7 @@ require 'faraday'
 require 'json'
 require 'logger'
 require_relative 'middleware/logging'
+require_relative 'middleware/authentication'
 
 module Reports
   class Error < StandardError; end
@@ -21,15 +22,10 @@ module Reports
     # - Parse user information
     # - Creates and returns user
   class GitHubAPIClient
-    def initialize(token)
-      @token = token
-    end
-
     def user_info(username)
-      headers = {"Authorization" => "token #{@token}"}
       url = "https://api.github.com/users/#{username}"
 
-      response = connection.get(url, nil, headers)
+      response = connection.get(url, nil)
 
       if !VALID_STATUS_CODES.include?(response.status)
         raise RequestFailure, JSON.parse(response.body)["message"]
@@ -48,10 +44,9 @@ module Reports
     end
 
     def repos(username)
-      headers = {"Authorization" => "token #{@token}"}
       url = "https://api.github.com/users/#{username}/repos"
 
-      response = connection.get(url, nil, headers)
+      response = connection.get(url, nil)
 
       if !VALID_STATUS_CODES.include?(response.status)
         raise RequestFailure, JSON.parse(response.body)["message"]
@@ -76,6 +71,7 @@ module Reports
     def connection
       #this build the stack
       @connnection ||= Faraday::Connection.new do |builder|
+        builder.use Middleware::Authentication
         builder.use Middleware::Logging
         builder.adapter Faraday.default_adapter
       end

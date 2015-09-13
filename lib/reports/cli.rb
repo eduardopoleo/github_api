@@ -20,7 +20,7 @@ module Reports
       # hidden in the root directory
       # github tokens for authentication can be generated as shown here
       # https://help.github.com/articles/creating-an-access-token-for-command-line-use/
-      client = GitHubAPIClient.new(ENV['GITHUB_TOKEN'])
+      client = GitHubAPIClient.new()
       user = client.user_info(user_name)
 
       puts "name: #{user.name}"
@@ -35,7 +35,7 @@ module Reports
     def repositories(user_name)
       puts "Getting repos for #{user_name}"
 
-      client = GitHubAPIClient.new(ENV['GITHUB_TOKEN'])
+      client = GitHubAPIClient.new()
       user_repos = client.repos(user_name)
 
       user_repos.each do |repo|
