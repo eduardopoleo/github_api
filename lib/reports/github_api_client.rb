@@ -11,6 +11,13 @@ module Reports
   User = Struct.new(:name, :location, :public_repos)
   VALID_STATUS_CODES = [200, 302, 403, 422, 404, 401]
 
+  #Concerns of the client:
+  #This could probably be seen as on big concern: Handling Api call.
+    # - Set the headers of the response, (this is where the token goes)
+    # - Makes the api call, including the auth token
+    # - Check and raise response errors
+    # - Parse user information
+    # - Creates and returns user
   class GitHubAPIClient
     def initialize(token)
       @token = token

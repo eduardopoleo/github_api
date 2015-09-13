@@ -1,5 +1,14 @@
 #!/usr/bin/env ruby
 
+# RUNNING THE PROGRAM FROM COMMAND LINE
+# bin/reports user_info user_name
+
+# bin/reports is the path for this file
+# Reports::Cli.start works becuase def console && IRB.star
+# user_info is the global method
+# It seems that CLI is just a irb session (thanks to Thor).
+# user_info a global method in irb. No need for a class method.
+
 # Add this directory to the load path for running during development
 lib_path = File.expand_path('../lib', File.dirname(__FILE__))
 $LOAD_PATH.unshift(lib_path) unless $LOAD_PATH.include?(lib_path)
