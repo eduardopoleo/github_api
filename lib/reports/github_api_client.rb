@@ -25,17 +25,13 @@ module Reports
   class GitHubAPIClient
     def user_info(username)
       url = "https://api.github.com/users/#{username}"
-
       response = connection.get(url, nil)
-
       User.new(response.body["name"], response.body["location"], response.body["public_repos"])
     end
 
     def repos(username)
       url = "https://api.github.com/users/#{username}/repos"
-
       response = connection.get(url, nil)
-
       repos = response.body.map do |repo|
         Repo.new(repo["full_name"], repo["html_url"] )
       end
