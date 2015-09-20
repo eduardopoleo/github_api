@@ -1,3 +1,5 @@
+require "time"
+
 module Reports
   module Middleware
     class Cache < Faraday::Middleware
@@ -12,21 +14,41 @@ module Reports
         return @storage[key] if @storage[key]
       # [status, headers, body]
         @app.call(env).on_complete do
-          if response_cachable?(env)
-            @storage[key] = env.response if env.method == :get
-          end
+           cache_response(env) if response_cachable?(env)
         end
       end
+
       private
 
-      def response_cachable?(env)
-        env.method == :get && !has_non_cacheable_headers?(env)
+      def cache_response(env)
+        key = env.url
+        @storage[key] = env.response
       end
 
-      def has_non_cacheable_headers?(env)
-        response_headers = env.response_headers
+      def response_cachable?(env)
+        env.method == :get && !needs_revalidation?(env)
+      end
+
+      def needs_revalidation?(env)
+        headers_prevent_caching?(env) || cache_is_stale?(env)
+      end
+
+      def headers_prevent_caching?(env)
+        headers = env.response_headers
         cache_codes = ["no-cache", "no-store", "must-revalidate"]
-        response_headers.empty? || cache_codes.any? {|code| response_headers["Cache-Control"].include?(code)}
+        headers.empty? || cache_codes.any? {|code| headers["Cache-Control"].include?(code)}
+      end
+
+      def cache_is_stale?(env)
+        headers = env.response_headers
+        if headers["Cache-Control"].include? "max-age"
+          period = headers["Cache-Control"][/\d+/].to_i
+          if (Time.now - Time.httpdate(headers["Date"])) > period
+            return true
+          else
+            return false
+          end
+        end
       end
     end
   end

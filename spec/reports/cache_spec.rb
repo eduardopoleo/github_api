@@ -1,4 +1,5 @@
 require "faraday"
+require "time"
 require "reports/middleware/cache"
 
 module Reports::Middleware
@@ -63,6 +64,25 @@ module Reports::Middleware
 
     it "does not use cached response when the response Cache-Control header has must-revalidate value" do
       stubs.get("http://example.test") { [200, {'Cache-Control' => 'must-revalidate'}, "hello"] }
+      conn.get("http://example.test")
+      stubs.get("http://example.test") { [404, {}, "not found"] }
+
+      response = conn.get "http://example.test"
+      expect(response.status).to eql(404)
+    end
+
+    it "uses cached response when it doesn't exceeds max age" do
+      stubs.get("http://example.test") { [200, { 'Cache-Control' => 'max-age=60', 'Date' => Time.now.httpdate}, "hello"] }
+      conn.get("http://example.test")
+      stubs.get("http://example.test") { [404, {}, "not found"] }
+
+      response = conn.get "http://example.test"
+      expect(response.status).to eql(200)
+    end
+
+    it "does not use cached response when it does exceeds max age" do
+      stubs.get("http://example.test") { [200, { 'Cache-Control' => 'max-age=60', 'Date' => (Time.now - 2 * 60).httpdate }, "hello"] }
+
       conn.get("http://example.test")
       stubs.get("http://example.test") { [404, {}, "not found"] }
 
