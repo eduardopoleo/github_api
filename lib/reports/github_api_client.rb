@@ -5,6 +5,8 @@ require_relative 'middleware/logging'
 require_relative 'middleware/authentication'
 require_relative 'middleware/status'
 require_relative 'middleware/json_parser'
+require_relative 'middleware/cache'
+require_relative 'storage/memory'
 
 module Reports
   class Error < StandardError; end
@@ -40,12 +42,12 @@ module Reports
     #Apparently Faraday middlewares stablish the connection first appended
     #then "use" the connection to create calls
     def connection
-      #this build the stack
-      @connnection ||= Faraday::Connection.new do |builder|
+      @connection ||= Faraday::Connection.new do |builder|
+        builder.use Middleware::StatusCheck
         builder.use Middleware::Authentication
+        builder.use Middleware::JSONParsing
+        builder.use Middleware::Cache, Storage::Memory.new
         builder.use Middleware::Logging
-        builder.use Middleware::Status
-        builder.use Middleware::JasonParser
         builder.adapter Faraday.default_adapter
       end
     end
