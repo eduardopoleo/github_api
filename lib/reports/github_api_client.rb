@@ -5,12 +5,15 @@ require_relative 'middleware/logging'
 require_relative 'middleware/authentication'
 require_relative 'middleware/status'
 require_relative 'middleware/json_parser'
+require_relative 'middleware/cache'
+require_relative 'storage/memory'
 
 module Reports
   class Error < StandardError; end
   class RequestFailure < Error; end
   class NonExistingUser < Error; end
   class AuthenticationFailure < Error; end
+  class ConfigurationError < Error; end
 
   User = Struct.new(:name, :location, :public_repos)
   Repo = Struct.new(:name, :url)
@@ -39,13 +42,13 @@ module Reports
 
     #Apparently Faraday middlewares stablish the connection first appended
     #then "use" the connection to create calls
-    def connection
-      #this build the stack
-      @connnection ||= Faraday::Connection.new do |builder|
+    def client
+      @client ||= Faraday::Connection.new do |builder|
+        builder.use Middleware::JSONParsing
+        builder.use Middleware::StatusCheck
         builder.use Middleware::Authentication
+        builder.use Middleware::Cache, Storage::Memcached.new
         builder.use Middleware::Logging
-        builder.use Middleware::Status
-        builder.use Middleware::JasonParser
         builder.adapter Faraday.default_adapter
       end
     end
