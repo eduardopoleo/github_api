@@ -3,6 +3,7 @@ module Reports
     class Cache < Faraday::Middleware
       def initialize(app)
         super(app)
+        @app = app
         @storage = {}
       end
 
@@ -10,52 +11,65 @@ module Reports
         key = env.url.to_s
         cached_response = @storage[key]
 
-        if cached_response && !mandatory_refresh?(cached_response) && fresh?(cached_response) #checks for "must-revalidate" + "no-cache" + "stale"
-          return cached_response
+        if cached_response # checks if there's a cached response
+          if fresh?(cached_response) # checks that the response is not stale
+            return cached_response if !needs_revalidation?(cached_response) # checks for "no-cache" "must-revalidate" tags
+          else
+            # sets the etag of the request equal to the chached response
+            # preparing for the immidiate api call
+            env.request_headers["If-None-Match"] = cached_response.headers['ETag']
+          end
         end
 
         response = @app.call(env)
-        return response unless env.method == :get #This shit should be down to forbids_storage with a comment or smt
-
         response.on_complete do |response_env|
-          cache_control_header = response_env.response_headers['Cache-Control']
-          if cache_control_header && !forbids_storage?(cache_control_header) #checks if no-store is present and there are cache parameters
-            @storage[key] = response
+          if cachable_response?(response_env) #checks for method :get and "no-store"
+            if response.status == 304 #Meaning the remote server compared the etags and found them equal
+              cached_response = @storage[key]
+              cached_response.headers['Date'] = response.headers['Date'] #Re updates the date of the cache
+              @storage[key] = cached_response
+
+              response.env.update(cached_response.env) # How does this work? and what does it do?
+            else
+              @storage[key] = response #re-caches the response
+            end
           end
         end
         response
       end
 
-      private
-
-      def mandatory_refresh?(cached_response)
-        cached_response.headers['Cache-Control'].include?('no-cache') || cached_response.headers['Cache-Control'].include?('must-revalidate')
+      def cachable_response?(env)
+        env.method == :get && env.response_headers['Cache-Control'] && !env.response_headers['Cache-Control'].include?('no-store')
       end
 
-      def forbids_storage?(cache_control_header)
-        cache_control_header.include?('no-store')
+      def needs_revalidation?(cached_response)
+        cached_response.headers['Cache-Control'] == 'no-cache' || cached_response.headers['Cache-Control'] == 'must-revalidate'
       end
 
+      # from here onwards it is just to check that the response is not stale
       def fresh?(cached_response)
-        age = response_age(cached_response)
-        max_age = response_max_age(cached_response)
+        age = cached_response_age(cached_response)
+        max_age = cached_response_max_age(cached_response)
 
         if age && max_age # Always stale without these values
           age <= max_age
         end
       end
 
-      def response_age(cached_response)
+      def cached_response_age(cached_response)
         date = cached_response.headers['Date']
-        time = Time.httpdate(date) if date
-        (Time.now - time).floor if time
+        if date
+          time = Time.httpdate(date)
+          (Time.now - time).floor
+        end
       end
 
-      def response_max_age(cached_response)
+      def cached_response_max_age(cached_response)
         cache_control = cached_response.headers['Cache-Control']
-        return nil unless cache_control
-        match = cache_control.match(/max\-age=(\d+)/)
-        match[1].to_i if match
+        if cache_control
+          match = cache_control.match(/max\-age=(\d+)/)
+          match[1].to_i if match
+        end
       end
     end
   end
