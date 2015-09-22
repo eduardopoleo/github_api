@@ -1,4 +1,5 @@
 require "faraday"
+require "time"
 require "reports/middleware/cache"
 
 module Reports::Middleware
@@ -13,7 +14,7 @@ module Reports::Middleware
     end
 
     it "returns a previously cached response" do
-      stubs.get("http://example.test") { [200, {'Cache-Control' => 'public'}, "hello"] }
+      stubs.get("http://example.test") { [200, { 'Cache-Control' => 'public max-age=60', 'Date' => Time.now.httpdate }, "hello"] }
       conn.get("http://example.test")
       stubs.get("http://example.test") { [404, {}, "not found"] }
 
@@ -32,7 +33,7 @@ module Reports::Middleware
       end
     end
 
-   it "does not cache when the response doesn't have Cache-Control header" do
+    it "does not cache when the response doesn't have Cache-Controll header" do
       stubs.get("http://example.test") { [200, {}, "hello"] }
       conn.get("http://example.test")
       stubs.get("http://example.test") { [404, {}, "not found"] }
@@ -41,7 +42,7 @@ module Reports::Middleware
       expect(response.status).to eql(404)
     end
 
-    it "does not cache when the response Cache-Control header has no-store value" do
+    it "does not cache when the response Cache-Controll header has no-store value" do
       stubs.get("http://example.test") { [200, {'Cache-Control' => 'no-store'}, "hello"] }
       conn.get("http://example.test")
       stubs.get("http://example.test") { [404, {}, "not found"] }
@@ -50,7 +51,7 @@ module Reports::Middleware
       expect(response.status).to eql(404)
     end
 
-    it "does not use cached response when the response Cache-Control header has no-cache value" do
+    it "does not use cached response when the response Cache-Controll header has no-cache value" do
       stubs.get("http://example.test") { [200, {'Cache-Control' => 'no-store'}, "hello"] }
       conn.get("http://example.test")
       stubs.get("http://example.test") { [404, {}, "not found"] }
@@ -59,8 +60,27 @@ module Reports::Middleware
       expect(response.status).to eql(404)
     end
 
-    it "does not use cached response when the response Cache-Control header has must-revalidate value" do
+    it "does not use cached response when the response Cache-Controll header has must-revalidate value" do
       stubs.get("http://example.test") { [200, {'Cache-Control' => 'must-revalidate'}, "hello"] }
+      conn.get("http://example.test")
+      stubs.get("http://example.test") { [404, {}, "not found"] }
+
+      response = conn.get "http://example.test"
+      expect(response.status).to eql(404)
+    end
+
+    it "uses cached response when it doesn't exceeds max age" do
+      stubs.get("http://example.test") { [200, { 'Cache-Control' => 'max-age=60', 'Date' => Time.now.httpdate}, "hello"] }
+      conn.get("http://example.test")
+      stubs.get("http://example.test") { [404, {}, "not found"] }
+
+      response = conn.get "http://example.test"
+      expect(response.status).to eql(200)
+    end
+
+    it "does not use cached response when it does exceeds max age" do
+      stubs.get("http://example.test") { [200, { 'Cache-Control' => 'max-age=60', 'Date' => (Time.now - 2 * 60).httpdate }, "hello"] }
+
       conn.get("http://example.test")
       stubs.get("http://example.test") { [404, {}, "not found"] }
 
