@@ -6,11 +6,13 @@ module Reports
       end
 
       def read(key)
-        @hash[key] #key is the url. This method is to see the response
+        serialized_value = @hash[key]
+        Marshal.load(serialized_value) if serialized_value
       end
 
       def write(key, value)
-        @hash[key] = value # this is the setter method
+        serialized_value = Marshal.dump(value)
+        @hash[key] = serialized_value # this is the setter method
       end
     end
   end

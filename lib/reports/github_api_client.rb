@@ -42,13 +42,13 @@ module Reports
     #Apparently Faraday middlewares stablish the connection first appended
     #then "use" the connection to create calls
     def connection
-      #this build the stack
+      #this builds the stack
       @connnection ||= Faraday::Connection.new do |builder|
-        builder.use Middleware::Authentication
-        builder.use Middleware::Logging
-        builder.use Middleware::Status
         builder.use Middleware::JasonParser
+        builder.use Middleware::Status
+        builder.use Middleware::Authentication
         builder.use Middleware::Cache, Storage::Memory.new # Apparently this is a way to pass in values when initiliazing a part of the stack
+        builder.use Middleware::Logging
         builder.adapter Faraday.default_adapter
       end
     end

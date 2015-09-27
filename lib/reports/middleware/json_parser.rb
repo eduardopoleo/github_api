@@ -5,7 +5,6 @@ module Reports
       # def initialize(app)
       #   super(app)
       # end
-
       def call(env)
         @app.call(env).on_complete do |response_env|
           if response_env.response_headers["content-type"].include?("application/json")

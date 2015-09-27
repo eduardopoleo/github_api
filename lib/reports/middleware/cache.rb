@@ -4,7 +4,7 @@ module Reports
       def initialize(app, storage)
         super(app)
         @app = app
-        @storage = storage # storage was passed as an argument on the faraday stack. 
+        @storage = storage # storage was passed as an argument on the faraday stack.
       end
 
       def call(env)
