@@ -7,6 +7,7 @@ require_relative 'middleware/status'
 require_relative 'middleware/json_parser'
 require_relative 'middleware/cache'
 require_relative 'storage/memory'
+require_relative 'storage/redis'
 
 module Reports
   class Error < StandardError; end
@@ -47,7 +48,7 @@ module Reports
         builder.use Middleware::JasonParser
         builder.use Middleware::Status
         builder.use Middleware::Authentication
-        builder.use Middleware::Cache, Storage::Memcached.new # Apparently this is a way to pass in values when initiliazing a part of the stack
+        builder.use Middleware::Cache, Storage::Redis.new # Apparently this is a way to pass in values when initiliazing a part of the stack
         builder.use Middleware::Logging
         builder.adapter Faraday.default_adapter
       end
