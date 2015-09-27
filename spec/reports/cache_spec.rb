@@ -1,6 +1,7 @@
 require "faraday"
 require "time"
 require "reports/middleware/cache"
+require "reports/storage/memory"
 
 module Reports::Middleware
   RSpec.describe Cache do
@@ -8,7 +9,7 @@ module Reports::Middleware
 
     let(:conn) do
       Faraday.new do |builder|
-        builder.use Cache
+        builder.use Cache, ::Reports::Storage::Memory.new
         builder.adapter :test, stubs
       end
     end
@@ -92,7 +93,7 @@ module Reports::Middleware
       response = conn.get "http://example.test"
       expect(response.status).to eql(404)
     end
-    
+
     it "refetches a stale response and replaces it with a new one" do
       # set up the cache for a response that's 2 minutes old
       two_minutes_ago = Time.now - 2 * 60

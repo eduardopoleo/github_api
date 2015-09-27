@@ -5,6 +5,8 @@ require_relative 'middleware/logging'
 require_relative 'middleware/authentication'
 require_relative 'middleware/status'
 require_relative 'middleware/json_parser'
+require_relative 'middleware/cache'
+require_relative 'storage/memory'
 
 module Reports
   class Error < StandardError; end
@@ -46,6 +48,7 @@ module Reports
         builder.use Middleware::Logging
         builder.use Middleware::Status
         builder.use Middleware::JasonParser
+        builder.use Middleware::Cache, Storage::Memory.new # Apparently this is a way to pass in values when initiliazing a part of the stack
         builder.adapter Faraday.default_adapter
       end
     end

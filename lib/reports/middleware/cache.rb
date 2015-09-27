@@ -1,15 +1,16 @@
 module Reports
   module Middleware
     class Cache < Faraday::Middleware
-      def initialize(app)
+      def initialize(app, storage)
         super(app)
         @app = app
-        @storage = {}
+        @storage = storage # storage was passed as an argument on the faraday stack. 
       end
 
       def call(env)
         key = env.url.to_s
-        cached_response = @storage[key]
+        cached_response = @storage.read(key)
+        # Abstracts away the idea of memory. In order to prepare for memcache and redis
 
         if cached_response # checks if there's a cached response
           if fresh?(cached_response) # checks that the response is not stale meaning that it does not exceeds the max-age
@@ -25,13 +26,13 @@ module Reports
         response.on_complete do |response_env|
           if cachable_response?(response_env) #checks for method :get and "no-store"
             if response.status == 304 # Not Modified. This always means that the response has not changed
-              cached_response = @storage[key] # Is this necessary ?
+              cached_response = @storage.read(key) # Is this necessary ?
               cached_response.headers['Date'] = response.headers['Date'] #Re updates the date of the cache for future max-age checks
-              @storage[key] = cached_response # re caches the response with updated date
+              @storage.write(key, cached_response)# re caches the response with updated date
 
               response.env.update(cached_response.env) # How does this work? and what does it do?
             else
-              @storage[key] = response #If the response has been modifed then re cached the new response
+              @storage.write(key, response) #If the response has been modifed then re cached the new response
             end
           end
         end
