@@ -47,7 +47,7 @@ module Reports
         builder.use Middleware::JasonParser
         builder.use Middleware::Status
         builder.use Middleware::Authentication
-        builder.use Middleware::Cache, Storage::Memory.new # Apparently this is a way to pass in values when initiliazing a part of the stack
+        builder.use Middleware::Cache, Storage::Memcached.new # Apparently this is a way to pass in values when initiliazing a part of the stack
         builder.use Middleware::Logging
         builder.adapter Faraday.default_adapter
       end
