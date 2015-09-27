@@ -12,11 +12,11 @@ module Reports
         cached_response = @storage[key]
 
         if cached_response # checks if there's a cached response
-          if fresh?(cached_response) # checks that the response is not stale
+          if fresh?(cached_response) # checks that the response is not stale meaning that it does not exceeds the max-age
             return cached_response if !needs_revalidation?(cached_response) # checks for "no-cache" "must-revalidate" tags
           else
-            # sets the etag of the request equal to the chached response
-            # preparing for the immidiate api call
+            # if not fresh, compare the Etag to check whether or not the content has changed
+            # this will happen on the call
             env.request_headers["If-None-Match"] = cached_response.headers['ETag']
           end
         end
@@ -24,14 +24,14 @@ module Reports
         response = @app.call(env)
         response.on_complete do |response_env|
           if cachable_response?(response_env) #checks for method :get and "no-store"
-            if response.status == 304 #Meaning the remote server compared the etags and found them equal
-              cached_response = @storage[key]
-              cached_response.headers['Date'] = response.headers['Date'] #Re updates the date of the cache
-              @storage[key] = cached_response
+            if response.status == 304 # Not Modified. This always means that the response has not changed
+              cached_response = @storage[key] # Is this necessary ?
+              cached_response.headers['Date'] = response.headers['Date'] #Re updates the date of the cache for future max-age checks
+              @storage[key] = cached_response # re caches the response with updated date
 
               response.env.update(cached_response.env) # How does this work? and what does it do?
             else
-              @storage[key] = response #re-caches the response
+              @storage[key] = response #If the response has been modifed then re cached the new response
             end
           end
         end

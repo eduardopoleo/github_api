@@ -1,0 +1,48 @@
+
+verify if the @storage has a value for that specific key
+
+return cash_response
+  if there is a value for that specific key
+  if there the response does not need to be revalidated
+
+after complete
+  check if response is actually cacheable if
+    method is get
+    there is cache-control
+    cache control is NOT set to "no-store"
+
+  checks if response need to revalidate if
+    the headers "no-cache" and "must-revalidate" are present
+
+  FEEDBACK:
+
+  Really hard to the given anwser some examples are:
+
+  def needs_revalidation?(cached_response)
+    cached_response.headers['Cache-Control'].include?('no-cache') || cached_response.headers['Cache-Control'].include?('must-revalidate')
+  end
+
+  Becomes mandatory_refresh? for Assignment: Expire Caches that Exceed Max Age
+
+  And then right after in Assignment: Smart Cache with Conditional Requests it goes back again to be need_revalidation?
+  And for some reason the code becomes more confusing
+
+
+
+  this piece of code:
+  if cached_response && !mandatory_refresh?(cached_response) && fresh?(cached_response)
+      return cached_response
+  end
+
+  response = @app.call(env)
+  return response unless env.method == :get
+
+  It is confusing that env.method == :get is not back into call when previously
+  was pushed into a private. Why not leaving this statement in a private method (e,g forbids_storage?)
+  if the storage never happens then cached_response never gets assigned making the first if statement good enough.
+
+  And yet again in Assignment: Smart Cache with Conditional Requests this statement goes back into the private method
+  Which also changed back name and the logic from forbids_storage? to cacheable_response?
+
+  Wouldn't make more sense to have a more simplified and more understandable method call
+  and push the hard logic into private methods
