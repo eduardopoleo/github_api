@@ -48,8 +48,8 @@ module Reports
         builder.use Middleware::JasonParser
         builder.use Middleware::Status
         builder.use Middleware::Authentication
-        builder.use Middleware::Cache, Storage::Redis.new # Apparently this is a way to pass in values when initiliazing a part of the stack
         builder.use Middleware::Logging
+        builder.use Middleware::Cache, Storage::Redis.new # Apparently this is a way to pass in values when initiliazing a part of the stack
         builder.adapter Faraday.default_adapter
       end
     end

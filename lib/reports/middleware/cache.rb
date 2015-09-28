@@ -14,7 +14,10 @@ module Reports
 
         if cached_response # checks if there's a cached response
           if fresh?(cached_response) # checks that the response is not stale meaning that it does not exceeds the max-age
-            return cached_response if !needs_revalidation?(cached_response) # checks for "no-cache" "must-revalidate" tags
+            if !needs_revalidation?(cached_response)
+              cached_response.env.response_headers["X-Faraday-Cache-Status"] = "true"
+              return cached_response
+            end
           else
             # if not fresh, compare the Etag to check whether or not the content has changed
             # this will happen on the call
