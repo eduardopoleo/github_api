@@ -1,48 +1,72 @@
-
-verify if the @storage has a value for that specific key
-
-return cash_response
-  if there is a value for that specific key
-  if there the response does not need to be revalidated
-
-after complete
-  check if response is actually cacheable if
-    method is get
-    there is cache-control
-    cache control is NOT set to "no-store"
-
-  checks if response need to revalidate if
-    the headers "no-cache" and "must-revalidate" are present
-
   FEEDBACK:
 
-  Really hard to the given anwser some examples are:
+  Hey guys I found the content of this lesson very interesting but it was not always easy to follow
+  throughout the assignments. In part because sometimes the code structure and method
+  naming changed drastically. For example
 
+  1) ```needs_revalidation?``` vs ```mandatory_refresh?```
+
+  In "Assignment: Respect Response Cache-Control Header"
+
+  ```ruby
   def needs_revalidation?(cached_response)
     cached_response.headers['Cache-Control'].include?('no-cache') || cached_response.headers['Cache-Control'].include?('must-revalidate')
   end
+  ```
 
-  Becomes mandatory_refresh? for Assignment: Expire Caches that Exceed Max Age
+  In Assignment: **Expire Caches that Exceed Max Age**, the exact same method changes naming to
 
-  And then right after in Assignment: Smart Cache with Conditional Requests it goes back again to be need_revalidation?
-  And for some reason the code becomes more confusing
-
-
-
-  this piece of code:
-  if cached_response && !mandatory_refresh?(cached_response) && fresh?(cached_response)
-      return cached_response
+  ```ruby
+  def mandatory_refresh?(cached_response)
+    cached_response.headers['Cache-Control'].include?('no-cache') || cached_response.headers['Cache-Control'].include?('must-revalidate')
   end
+  ```
 
-  response = @app.call(env)
+  In Assignment: **Smart Cache with Conditional Requests** goes back again to
+
+  ```ruby
+  def needs_revalidation?(cached_response)
+    #why did we remove the include anymore it seemed more accurate
+    cached_response.headers['Cache-Control'] == 'no-cache' || cached_response.headers['Cache-Control'] == 'must-revalidate'
+  end
+  ```
+  2) When checking for the type of request
+
+  In Assignment: **Respect Response Cache-Control Header**
+
+  ```ruby
+  def cachable_response?(env)
+    env.method == :get ...
+  end
+  ```
+
+  In Assignment: **Expire Caches that Exceed Max Age**
+
+  ```ruby
   return response unless env.method == :get
+  ```
+  In Assignment: **Smart Cache with Conditional Requests** goes back to being inside a method
 
-  It is confusing that env.method == :get is not back into call when previously
-  was pushed into a private. Why not leaving this statement in a private method (e,g forbids_storage?)
-  if the storage never happens then cached_response never gets assigned making the first if statement good enough.
+  ```ruby
+  def cachable_response?(env)
+    env.method == :get ...
+  end
+  ```
 
-  And yet again in Assignment: Smart Cache with Conditional Requests this statement goes back into the private method
-  Which also changed back name and the logic from forbids_storage? to cacheable_response?
+  When we get to:
+  **Smart Cache with Conditional Requests**, The code is a bit complicated already
+  It would be nice to have some comments along side the methods to have a quick idea of what they do
+  without having to dig deep down. Something like this:
 
-  Wouldn't make more sense to have a more simplified and more understandable method call
-  and push the hard logic into private methods
+  ```ruby
+  if cached_response
+    if fresh?(cached_response) #checks if the response has exceeded the max-age
+      return cached_response if !needs_revalidation?(cached_response) #Checks for the headers "no-cached" and "must-revalidate"
+    else
+      env.request_headers["If-None-Match"] = cached_response.headers['ETag']
+    end
+  end
+  ```
+  I find this kind of commenting useful when I learning new concepts.
+
+  Finally shouldn't these "support" methods (e.g fresh?, needs_revalidation?) be private?

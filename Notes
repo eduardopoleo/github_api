@@ -1,0 +1,28 @@
+Public events for an user
+GET /users/:username/events/public
+
+Response structure
+{
+  actor: {
+
+  },
+  created_at:..,
+  id:,
+  org: {
+
+  },
+  payload:{
+
+  },
+  public: true,
+  repo: {
+    id: ,
+    name: ,
+    url:
+  },
+  type: "Push Event"
+}
+
+if event["type"] == "Push Event"
+  puts event[repo][name]
+end
