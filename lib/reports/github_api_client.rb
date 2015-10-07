@@ -17,6 +17,7 @@ module Reports
 
   User = Struct.new(:name, :location, :public_repos)
   Repo = Struct.new(:name, :url)
+  Event = Struct.new(:type, :repo)
 
   #Concerns of the client:
   #This could probably be seen as on big concern: Handling Api call.
@@ -40,6 +41,17 @@ module Reports
       end
     end
 
+    def activity(username)
+      url = "https://api.github.com/users/#{username}/events/public"
+      response = connection.get(url, nil)
+      if response.status == 200
+        events = response.body.map do |event|
+          Event.new(event["type"], event["repo"]["name"])
+        end
+      else
+        raise NonExistingUser, "#{username} does not exist"
+      end
+    end
     #Apparently Faraday middlewares stablish the connection first appended
     #then "use" the connection to create calls
     def connection

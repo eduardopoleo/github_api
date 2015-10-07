@@ -14,6 +14,18 @@ module Reports
   class CLI < Thor
     desc "user_info USERNAME", "Get information for a user"
 
+    def activity(user_name)
+      client = GitHubAPIClient.new()
+      event_activities = client.activity(user_name)
+
+      event_activities.each do |ea|
+        puts "#{ea.type} - #{ea.repo}"
+      end
+    rescue Error => error
+      puts "ERROR #{error.message}"
+      exit 1
+    end
+
     def user_info(user_name)
       puts "Getting info for #{user_name}"
       # Using dotenv The enviroment variables are stored in the .env which is

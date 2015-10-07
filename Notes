@@ -23,6 +23,7 @@ Response structure
   type: "Push Event"
 }
 
+event["type"] - event["repo"]["name"]
 if event["type"] == "Push Event"
   puts event[repo][name]
 end

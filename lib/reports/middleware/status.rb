@@ -16,10 +16,6 @@ module Reports
           if response_env.status == 401
             raise AuthenticationFailure, "Authentication Failed please send the correct github token"
           end
-
-          if response_env.status == 404
-            raise NonExistingUser, "#{username} not found"
-          end
         end
       end
     end
