@@ -43,14 +43,27 @@ module Reports
 
     def activity(username)
       url = "https://api.github.com/users/#{username}/events/public"
-      response = connection.get(url, nil)
-      if response.status == 200
-        events = response.body.map do |event|
-          Event.new(event["type"], event["repo"]["name"])
-        end
-      else
-        raise NonExistingUser, "#{username} does not exist"
+      response = connection.get(url)
+
+      raise NonExistingUser, "'#{username}' does not exist" unless response.status == 200
+
+      events = response.body
+
+      page = last_page = 1
+      link_header = response.headers['link']
+
+      #I gues if there are link tags in the headers indicate that is paginated
+      if link_header
+        last_page = link_header.match(/<.*page=(\d+)>; rel="last"/)[1].to_i
       end
+
+      while page < last_page
+        page += 1
+        response = connection.get(url, page: page)
+        events += response.body
+      end
+
+      events.map{ |event_data| Event.new(event_data["type"], event_data["repo"]["name"])}
     end
     #Apparently Faraday middlewares stablish the connection first appended
     #then "use" the connection to create calls
