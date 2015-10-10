@@ -35,31 +35,42 @@ module Reports
 
     def repos(username)
       url = "https://api.github.com/users/#{username}/repos"
-      response = connection.get(url, nil)
-      repos = response.body.map do |repo|
-        Repo.new(repo["full_name"], repo["html_url"] )
+      link_header = 'next'
+      repos = []
+
+      loop do
+        response = connection.get(url)
+        raise NonExistingUser, "'#{username}' does not exist" unless response.status == 200
+        link_header = response.headers['link']
+
+        if !link_header.include?('next')
+          break
+        end
+
+        url = link_header.match(/<(.*)>; rel="next"/)[1]
+
+        repos += response.body
       end
+
+      repos.map{ |repo| Repo.new(repo["full_name"], repo["html_url"] )}
     end
 
     def activity(username)
       url = "https://api.github.com/users/#{username}/events/public"
-      response = connection.get(url)
+      link_header = 'next'
+      events = []
 
-      raise NonExistingUser, "'#{username}' does not exist" unless response.status == 200
+      loop do
+        response = connection.get(url)
+        raise NonExistingUser, "'#{username}' does not exist" unless response.status == 200
+        link_header = response.headers['link']
 
-      events = response.body
+        if !link_header.include?('next')
+          break
+        end
 
-      page = last_page = 1
-      link_header = response.headers['link']
+        url = link_header.match(/<(.*)>; rel="next"/)[1]
 
-      #I gues if there are link tags in the headers indicate that is paginated
-      if link_header
-        last_page = link_header.match(/<.*page=(\d+)>; rel="last"/)[1].to_i
-      end
-
-      while page < last_page
-        page += 1
-        response = connection.get(url, page: page)
         events += response.body
       end
 
