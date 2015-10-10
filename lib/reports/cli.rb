@@ -59,16 +59,12 @@ module Reports
       puts
       puts
 
-      user_repos.each do |repo|
-        puts "#{repo.name} -  #{repo.url}"
-      end
-        puts
-        puts
-        
-      user_repos.each do |repo|
-        puts "#{repo.name}: #{repo.languages.join(',')}"
-      end
+      table_printer = TablePrinter.new(STDOUT)
 
+
+      user_repos.each do |repo|
+        table_printer.print(repo["languages"], title: "Language breakdown for #{repo.name}", humanize: true)
+      end
 
     rescue Error => error
       puts "ERROR: #{error.message}"

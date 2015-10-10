@@ -59,11 +59,9 @@ module Reports
         repo_languages = []
         languages_url = "https://api.github.com/repos/#{repo['full_name']}/languages"
         response = connection.get(languages_url)
-        response.body.each do |language, i|
-          repo_languages << language
-        end
-
-        all_languages << repo_languages
+        response.body
+        
+        all_languages << response.body
       end
 
       repos.each_with_index.map do |repo, i|
