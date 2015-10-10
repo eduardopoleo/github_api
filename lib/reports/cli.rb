@@ -50,19 +50,21 @@ module Reports
     end
 
     desc "repositories USERNAME", "Get public repos for a user"
-    def repositories(user_name)
+    def repositories(user_name, fork=false)
       puts "Getting repos for #{user_name}"
 
       client = GitHubAPIClient.new()
-      user_repos = client.repos(user_name)
+      user_repos = client.repos(user_name, fork)
 
       puts
-      puts 
+      puts
+
       user_repos.each do |repo|
         puts "#{repo.name} -  #{repo.url}"
       end
         puts
         puts
+        
       user_repos.each do |repo|
         puts "#{repo.name}: #{repo.languages.join(',')}"
       end

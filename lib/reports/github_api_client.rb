@@ -33,7 +33,7 @@ module Reports
       User.new(response.body["name"], response.body["location"], response.body["public_repos"])
     end
 
-    def repos(username)
+    def repos(username, fork)
       url = "https://api.github.com/users/#{username}/repos"
 
       response = connection.get(url)
@@ -55,6 +55,7 @@ module Reports
       #Gets all the languages associated with the repos
       all_languages = []
       repos.each do |repo|
+
         repo_languages = []
         languages_url = "https://api.github.com/repos/#{repo['full_name']}/languages"
         response = connection.get(languages_url)
@@ -66,8 +67,10 @@ module Reports
       end
 
       repos.each_with_index.map do |repo, i|
+        next if !fork && repo['fork']
         Repo.new(repo["full_name"], repo["html_url"], all_languages[i])
-      end
+      end.compact
+      #when mapping a next produces a nil
     end
 
     def activity(username)
