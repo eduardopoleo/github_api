@@ -16,7 +16,7 @@ module Reports
   class AuthenticationFailure < Error; end
 
   User = Struct.new(:name, :location, :public_repos)
-  Repo = Struct.new(:name, :url)
+  Repo = Struct.new(:name, :url, :languages)
   Event = Struct.new(:type, :repo)
 
   #Concerns of the client:
@@ -35,24 +35,39 @@ module Reports
 
     def repos(username)
       url = "https://api.github.com/users/#{username}/repos"
-      link_header = 'next'
-      repos = []
 
-      loop do
-        response = connection.get(url)
-        raise NonExistingUser, "'#{username}' does not exist" unless response.status == 200
-        link_header = response.headers['link']
+      response = connection.get(url)
+      raise NonexistentUser, "'#{username}' does not exist" unless response.status == 200
 
-        if !link_header.include?('next')
-          break
+      repos = response.body
+
+      link_header = response.headers['link']
+
+      if link_header
+        while match_data = link_header.match(/<(.*)>; rel="next"/)
+          next_page_url = match_data[1]
+          response = connection.get(next_page_url)
+          link_header = response.headers['link']
+          repos += response.body
         end
-
-        url = link_header.match(/<(.*)>; rel="next"/)[1]
-
-        repos += response.body
       end
 
-      repos.map{ |repo| Repo.new(repo["full_name"], repo["html_url"] )}
+      #Gets all the languages associated with the repos
+      all_languages = []
+      repos.each do |repo|
+        repo_languages = []
+        languages_url = "https://api.github.com/repos/#{repo['full_name']}/languages"
+        response = connection.get(languages_url)
+        response.body.each do |language, i|
+          repo_languages << language
+        end
+
+        all_languages << repo_languages
+      end
+
+      repos.each_with_index.map do |repo, i|
+        Repo.new(repo["full_name"], repo["html_url"], all_languages[i])
+      end
     end
 
     def activity(username)

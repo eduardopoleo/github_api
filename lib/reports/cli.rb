@@ -56,9 +56,17 @@ module Reports
       client = GitHubAPIClient.new()
       user_repos = client.repos(user_name)
 
+      puts
+      puts 
       user_repos.each do |repo|
         puts "#{repo.name} -  #{repo.url}"
       end
+        puts
+        puts
+      user_repos.each do |repo|
+        puts "#{repo.name}: #{repo.languages.join(',')}"
+      end
+
 
     rescue Error => error
       puts "ERROR: #{error.message}"
