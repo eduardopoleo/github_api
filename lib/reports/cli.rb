@@ -71,6 +71,38 @@ module Reports
       exit 1
     end
 
+    desc "star_repo FULL_REPO_NAME", "Star a repository"
+    def star_repo(repo_name)
+      puts "Starring #{repo_name}..."
+      client = GitHubAPIClient.new
+
+      if client.repo_starred?(repo_name)
+        puts "you have already starred #{repo_name}"
+      else
+        client.star_repo(repo_name)
+        puts "You have astarred #{repo_name}"
+      end
+    rescue Error => error
+      puts "ERROR #{error.message}"
+      exit 1
+    end
+
+    desc "unstar_repo FULL_REPO_NAME", "Unstar a repository"
+    def unstar_repo(repo_name)
+      puts "Unstarring #{repo_name}..."
+
+      client = GitHubAPIClient.new
+
+      if client.repo_starred?(repo_name)
+        client.unstar_repo(repo_name)
+        puts "You have unstarred #{repo_name}."
+      else
+        puts "You have not starred #{repo_name}."
+      end
+    rescue Error => error
+      puts "ERROR #{error.message}"
+      exit 1
+    end
 
     desc "console", "Open an RB session with all dependencies loaded and API defined."
     def console
