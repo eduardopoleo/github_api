@@ -14,10 +14,12 @@ module Reports
   class RequestFailure < Error; end
   class NonExistingUser < Error; end
   class AuthenticationFailure < Error; end
+  class GistCreationFailure < Error; end
 
   User = Struct.new(:name, :location, :public_repos)
   Repo = Struct.new(:name, :url, :languages)
   Event = Struct.new(:type, :repo)
+
 
   #Concerns of the client:
   #This could probably be seen as on big concern: Handling Api call.
@@ -60,7 +62,7 @@ module Reports
         languages_url = "https://api.github.com/repos/#{repo['full_name']}/languages"
         response = connection.get(languages_url)
         response.body
-        
+
         all_languages << response.body
       end
 
@@ -92,6 +94,28 @@ module Reports
 
       events.map{ |event_data| Event.new(event_data["type"], event_data["repo"]["name"])}
     end
+
+    def create_private_gist(description, filename, contents)
+      url = "https://api.github.com/gists"
+      payload = JSON.dump({
+        description: description,
+        public: false,
+        files: {
+          filename => {
+            content: contents
+          }
+        }
+      })
+
+      response = connection.post url, payload
+
+      if response.status == 201
+        response.body["html_url"]
+      else
+        raise GistCreationFailure, response.body["message"]
+      end
+    end
+
     #Apparently Faraday middlewares stablish the connection first appended
     #then "use" the connection to create calls
     def connection

@@ -27,3 +27,17 @@ event["type"] - event["repo"]["name"]
 if event["type"] == "Push Event"
   puts event[repo][name]
 end
+
+Perdido En Tus Ojos
+Feedback
+Assignments: Activity Report with Table Display
+# In the each_with_object
+# Add some comments about the type of data structure produced
+# and why we need that specific data structure on the
+
+
+Use Hypermedia in Pagination
+#API provides soley by interacting with the it
+
+#Non-idempotent Methods, Testing and Tooling
+Add the 201 to the list of status code on the status middleware

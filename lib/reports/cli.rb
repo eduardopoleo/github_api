@@ -71,14 +71,29 @@ module Reports
       exit 1
     end
 
+
     desc "console", "Open an RB session with all dependencies loaded and API defined."
     def console
       require 'irb'
       ARGV.clear
       IRB.start
     end
-    private
 
+    desc "gist DESCRIPTION FILENAME CONTENTS", "Create a private Gist on GitHub"
+    desc "activity", "Create a new private gist"
+    def gist(description, file, content)
+      puts "Creating a new private gist..."
+
+      client = GitHubAPIClient.new
+      gist = client.create_private_gist(description, file, content)
+      puts "You just created a new gist at #{gist}"
+    rescue Error => e
+      puts "ERROR #{e.message}"
+      exit 1
+    end
+
+
+    private
     def print_activity_report(events)
       table_printer = TablePrinter.new(STDOUT)
       event_types_map = events.each_with_object(Hash.new(0)) do |event, counts|
