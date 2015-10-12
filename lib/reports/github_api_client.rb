@@ -29,6 +29,13 @@ module Reports
     # - Parse user information
     # - Creates and returns user
   class GitHubAPIClient
+    def initialize
+      level = ENV["LOG_LEVEL"]
+      @logger = Logger.new(STDOUT)
+      @logger.formatter = proc { |severity, datetime, program, message| message + "\n" }
+      @logger.level = Logger.const_get(level) if level
+    end
+    
     def user_info(username)
       url = "https://api.github.com/users/#{username}"
       response = connection.get(url, nil)
