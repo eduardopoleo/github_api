@@ -3,11 +3,12 @@ Dotenv.load
 
 require 'reports/github_api_client'
 require "time"
+require 'vcr_helper'
 
 module Reports
   RSpec.describe GitHubAPIClient do
 
-    describe "user_info" do
+    describe "user_info", :vcr do
       it "returns the correct user info" do
         user = GitHubAPIClient.new().user_info("eduardopoleo")
 
@@ -24,7 +25,5 @@ module Reports
         }).to raise_error(NonExistingUser)
       end
     end
-
-
   end
 end
