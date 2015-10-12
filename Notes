@@ -53,3 +53,9 @@ Add the "require time" library so that the cached middleware does not explode
 #Assignment: Logger Level for Environments
 I do not understand why set different log levels. Why wouldn't I want to see the
 logging messages when I am testing.
+
+#API Client Libraries
+all interactions with the API library are explicetely
+
+#Inspection with HTTP Proxy
+ordinarily we would be unable to see what wach

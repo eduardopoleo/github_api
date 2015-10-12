@@ -35,7 +35,7 @@ module Reports
       @logger.formatter = proc { |severity, datetime, program, message| message + "\n" }
       @logger.level = Logger.const_get(level) if level
     end
-    
+
     def user_info(username)
       url = "https://api.github.com/users/#{username}"
       response = connection.get(url, nil)
@@ -146,7 +146,11 @@ module Reports
     #Apparently Faraday middlewares stablish the connection first appended
     #then "use" the connection to create calls
     def connection
-      #this builds the stack
+      ca_path = File.expand_path("~/.mitmproxy/mitmproxy-ca-cert.pem")
+      options = { proxy: 'https://localhost:8080',
+              ssl: {ca_file: ca_path},
+              url: "https://api.github.com"}
+
       @connnection ||= Faraday::Connection.new do |builder|
         builder.use Middleware::JasonParser
         builder.use Middleware::Status
