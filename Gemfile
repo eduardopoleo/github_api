@@ -13,6 +13,7 @@ gem "faraday"
 gem "json"
 gem "pry"
 gem 'dotenv-rails', :groups => [:development, :test]
+gem 'sinatra'
 
 group :development, :test do
   gem "byebug"
