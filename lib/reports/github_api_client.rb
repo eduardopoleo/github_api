@@ -116,6 +116,25 @@ module Reports
       end
     end
 
+    def repo_starred?(repo_name)
+      url = "https://api.github.com/user/starred/#{repo_name}"
+
+      response = connection.get(url)
+
+      response.status == 204
+    end
+
+    def star_repo(repo_name)
+      url = "https://api.github.com/user/starred/#{repo_name}"
+      response = connection.put url
+      raise RequestFailure, response.body['message'] unless response.status == 204
+    end
+
+    def unstar_repo(repo_name)
+      url = "https://api.github.com/user/starred/#{repo_name}"
+      response = connection.delete url
+      raise RequestFailure, response.body['message'] unless response.status == 204
+    end
     #Apparently Faraday middlewares stablish the connection first appended
     #then "use" the connection to create calls
     def connection
