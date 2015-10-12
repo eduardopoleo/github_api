@@ -32,6 +32,7 @@ module Reports
     def user_info(username)
       url = "https://api.github.com/users/#{username}"
       response = connection.get(url, nil)
+      raise NonExistingUser, "'#{username}' does not exist" unless response.status == 200
       User.new(response.body["name"], response.body["location"], response.body["public_repos"])
     end
 
@@ -39,7 +40,7 @@ module Reports
       url = "https://api.github.com/users/#{username}/repos"
 
       response = connection.get(url)
-      raise NonexistentUser, "'#{username}' does not exist" unless response.status == 200
+      raise NonExistingUser, "'#{username}' does not exist" unless response.status == 200
 
       repos = response.body
 

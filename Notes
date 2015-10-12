@@ -46,3 +46,6 @@ Assignment: Star a Repository with Put Request
 204 returns with no body and the json parser craps out
 When starring the fact that the response.body comes back empty causes some problems in
 some of the middleware
+
+#Assignment: Add First Integration Test
+Add the "require time" library so that the cached middleware does not explode
